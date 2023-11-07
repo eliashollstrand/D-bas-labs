@@ -1,0 +1,159 @@
+-- Create tables
+
+CREATE TABLE books 
+(
+    isbn varchar(255) NOT NULL PRIMARY KEY,
+    title varchar(255) NOT NULL,
+    edition varchar(255), 
+    language varchar(255), 
+    date_of_publication date, 
+    publisher varchar(255), 
+    author varchar(255), 
+    genre varchar(255), 
+    prequel varchar(255)
+);
+ 
+CREATE TABLE copies 
+(
+    physical_id int NOT NULL PRIMARY KEY,
+    isbn varchar(255),
+    damage varchar(255),
+    CONSTRAINT FK_CopyISBN
+    FOREIGN KEY (isbn)
+    REFERENCES books(isbn)
+);
+
+ 
+CREATE TABLE users 
+(
+    user_id int NOT NULL PRIMARY KEY, 
+    email varchar(255) NOT NULL, 
+    full_name varchar(255) NOT NULL, 
+    address varchar(255) NOT NULL      
+);
+ 
+CREATE TABLE students 
+(
+    user_id int NOT NULL PRIMARY KEY,
+    program varchar(255) NOT NULL,
+    CONSTRAINT FK_StudentUserID 
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+ 
+CREATE TABLE admins
+(
+    user_id int NOT NULL PRIMARY KEY,
+    phone_number varchar(255) NOT NULL,
+    department varchar(255) NOT NULL,
+    CONSTRAINT FK_AdminUserID
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+
+CREATE TABLE loans 
+(
+    borrowing_id int NOT NULL PRIMARY KEY, 
+    physical_id int, 
+    user_id int,
+    date_of_borrowing date, 
+    due_date date, 
+    date_of_return date,
+    CONSTRAINT FK_LoanPhysicalID
+    FOREIGN KEY (physical_id)
+    REFERENCES copies(physical_id),
+    CONSTRAINT FK_LoanUserID
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+ 
+CREATE TABLE fines
+(
+    borrowing_id int, 
+    amount int NOT NULL, 
+    CONSTRAINT FK_FineBorrowingID
+    FOREIGN KEY (borrowing_id)
+    REFERENCES loans(borrowing_id)
+);
+ 
+CREATE TABLE transactions 
+(
+    transaction_id int NOT NULL PRIMARY KEY, 
+    borrowing_id int,
+    amount int NOT NULL, 
+    date_of_payment date NOT NULL, 
+    payment_method varchar(255) NOT NULL,
+    CONSTRAINT FK_TransactionBorrowingID
+    FOREIGN KEY (borrowing_id)
+    REFERENCES loans(borrowing_id)
+);
+
+-- insert students
+
+INSERT INTO users (user_id, email, full_name, address) VALUES (1, 'email1@kth.se', 'student1', 'address1');
+INSERT INTO students (user_id, program) VALUES (1, 'program1');
+
+INSERT INTO users (user_id, email, full_name, address) VALUES (2, 'email2@kth.se', 'student2', 'address2');
+INSERT INTO students (user_id, program) VALUES (2, 'program2');
+
+INSERT INTO users (user_id, email, full_name, address) VALUES (3, 'email3@kth.se', 'student3', 'address3');
+INSERT INTO students (user_id, program) VALUES (3, 'program3');
+
+INSERT INTO users (user_id, email, full_name, address) VALUES (4, 'email4@kth.se', 'student4', 'address4');
+INSERT INTO students (user_id, program) VALUES (4, 'program4');
+
+INSERT INTO users (user_id, email, full_name, address) VALUES (5, 'email5@kth.se', 'student5', 'address5');
+INSERT INTO students (user_id, program) VALUES (5, 'program5');
+
+-- insert admins
+
+INSERT INTO users (user_id, email, full_name, address) VALUES (6, 'email6@kth.se', 'admin6', 'address6');
+INSERT INTO admins (user_id, phone_number, department) VALUES (6, 'phone_number6', 'department6');
+
+-- insert books
+
+INSERT INTO books (isbn, title, language, date_of_publication, publisher, author, genre) VALUES ('9780552160896', 'Angels And Demons', 'Engelska', '2009-08-28', 'Transworld Publishers Ltd', 'Dan Brown', 'Thriller');
+INSERT INTO books (isbn, title, language, date_of_publication, publisher, author, genre, prequel) VALUES ('9780552159715', 'The Da Vinci Code', 'Engelska', '2009-08-28', 'Transworld Publishers Ltd', 'Dan Brown', 'Thriller', 'Angels And Demons');
+INSERT INTO books (isbn, title, language, date_of_publication, publisher, author, genre, prequel) VALUES ('9780552149525', 'The Lost Symbol', 'Engelska', '2010-07-22', 'Transworld Publishers Ltd', 'Dan Brown', 'Thriller', 'Angels And Demons, The Da Vinci Code');
+INSERT INTO books (isbn, title, edition, language, date_of_publication, publisher, author, genre) VALUES ('9789129723946', 'Harry Potter och de vises sten', '8', 'Svenska', '2015-10-01', 'Rabén & Sjögren', 'J.K. Rowling', 'Fantasy');
+INSERT INTO books (isbn, title, edition, language, date_of_publication, publisher, author, genre, prequel) VALUES ('9789129701364', 'Harry Potter och Hemligheternas kammare', '2', 'Svenska', '2016-10-06', 'Rabén & Sjögren', 'J.K. Rowling', 'Fantasy', 'Harry Potter och de vises sten');
+
+-- insert copies
+
+INSERT INTO copies (physical_id, isbn, damage) VALUES (1, '9780552160896', 'ingen'); /* Angels And Demons */
+INSERT INTO copies (physical_id, isbn, damage) VALUES (2, '9780552160896', 'Sid. 3 riven'); /* Angels And Demons*/
+INSERT INTO copies (physical_id, isbn, damage) VALUES (3, '9780552159715', 'Tuggummi mellan sid. 10-11'); /* The Da Vinci Code*/
+INSERT INTO copies (physical_id, isbn, damage) VALUES (4, '9780552159715', 'Ingen'); /*The Da Vinci Code*/
+INSERT INTO copies (physical_id, isbn, damage) VALUES (5, '9780552159715', 'Solblekt'); /*The Da Vinci Code*/
+INSERT INTO copies (physical_id, isbn, damage) VALUES (6, '9780552149525', 'Kaffefläck'); /*The Lost Symbol*/
+INSERT INTO copies (physical_id, isbn, damage) VALUES (7, '9789129723946', 'Klotter på första sidan'); /*Harry Potter och de vises sten*/
+
+-- insert loans
+-- two books that have not been returned, and two that have been returned
+
+INSERT INTO loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date, date_of_return) VALUES (1, 1, 1, '2023-10-01', '2023-10-08', '2023-10-07'); /*Angels And Demons*/
+INSERT INTO loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date, date_of_return) VALUES (2, 3, 2, '2023-10-03', '2023-10-10', '2023-10-07'); /*Angels And Demons*/
+INSERT INTO loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date) VALUES (3, 5, 3, '2023-10-05', '2023-10-12'); /*The Da Vinci Code*/
+INSERT INTO loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date) VALUES (4, 7, 4, '2023-10-06', '2023-10-13'); /*The Da Vinci Code*/
+
+-- insert fines
+
+INSERT INTO fines (borrowing_id, amount) VALUES (4, 100);
+
+-- Select statements
+
+--SELECT full_name AS name FROM users;
+SELECT full_name FROM users; 
+
+SELECT * FROM loans; -- or SELECT physical_id FROM loans; depending on what is wanted 
+
+SELECT title FROM books;
+
+SELECT * FROM fines;
+
+
+
+
+
+
+
