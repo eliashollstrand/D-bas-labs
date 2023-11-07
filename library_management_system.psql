@@ -1,0 +1,125 @@
+CREATE TABLE books 
+(
+    isbn varchar(255) NOT NULL PRIMARY KEY,
+    title varchar(255) NOT NULL,
+    edition varchar(255), 
+    language varchar(255), 
+    date_of_publication date, 
+    publisher varchar(255), 
+    author varchar(255), 
+    genre varchar(255), 
+    prequel varchar(255)
+);
+
+CREATE TABLE copies 
+(
+    physical_id int NOT NULL PRIMARY KEY,
+    isbn varchar(255),
+    damage varchar(255),
+    CONSTRAINT FK_CopyISBN
+    FOREIGN KEY (isbn)
+    REFERENCES books(isbn)
+);
+
+CREATE TABLE users 
+(
+    user_id int NOT NULL PRIMARY KEY, 
+    email varchar(255) NOT NULL, 
+    full_name varchar(255) NOT NULL, 
+    address varchar(255) NOT NULL      
+);
+
+CREATE TABLE students 
+(
+    user_id int NOT NULL PRIMARY KEY,
+    program varchar(255) NOT NULL,
+    CONSTRAINT FK_StudentUserID 
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+
+CREATE TABLE admins
+(
+    user_id int NOT NULL PRIMARY KEY,
+    phone_number varchar(255) NOT NULL,
+    department varchar(255) NOT NULL,
+    CONSTRAINT FK_AdminUserID
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+
+CREATE TABLE loans 
+(
+    borrowing_id int NOT NULL PRIMARY KEY, 
+    physical_id int, 
+    user_id int,
+    date_of_borrowing date, 
+    due_date date, 
+    date_of_return date,
+    CONSTRAINT FK_LoanPhysicalID
+    FOREIGN KEY (physical_id)
+    REFERENCES copies(physical_id),
+    CONSTRAINT FK_LoanUserID
+    FOREIGN KEY (user_id)
+    REFERENCES users(user_id)
+);
+
+CREATE TABLE fines
+(
+    borrowing_id int, 
+    amount int NOT NULL, 
+    CONSTRAINT FK_FineBorrowingID
+    FOREIGN KEY (borrowing_id)
+    REFERENCES loans(borrowing_id)
+);
+
+CREATE TABLE transactions 
+(
+    transaction_id int NOT NULL PRIMARY KEY, 
+    borrowing_id int,
+    amount int NOT NULL, 
+    date_of_payment date NOT NULL, 
+    payment_method varchar(255) NOT NULL,
+    CONSTRAINT FK_TransactionBorrowingID
+    FOREIGN KEY (borrowing_id)
+    REFERENCES loans(borrowing_id)
+);
+
+
+# Adding students
+INSERT INTO users
+VALUES (1, 'user1@kth.se, 'John Doe', 'Valhallavägen 2');
+
+INSERT INTO students 
+VALUES (1, 'CDATE');
+
+INSERT INTO users
+VALUES (2, 'user2@kth.se, 'Jane Doe', 'Valhallavägen 2');
+
+INSERT INTO students 
+VALUES (2, 'CDATE');
+
+INSERT INTO users
+VALUES (3, 'user3@kth.se, 'Elias Hollstrand', 'Nånstansvägen 69');
+
+INSERT INTO students 
+VALUES (3, 'CDATE');
+
+INSERT INTO users
+VALUES (4, 'user4@kth.se, 'Mattias Kvist', 'Forumvägen 30000');
+
+INSERT INTO students 
+VALUES (4, 'CDATE');
+
+INSERT INTO users
+VALUES (5, 'user5@kth.se, 'Karl Karlsson', 'Valhallavägen 3');
+
+INSERT INTO students 
+VALUES (5, 'INDEK');
+
+# Adding admins
+INSERT INTO users
+VALUES (6, 'user6@kth.se, 'Admin Adminsson', 'Valhallavägen 4');
+
+
+
