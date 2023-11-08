@@ -170,7 +170,10 @@ CREATE TABLE Employee
     name varchar(255) NOT NULL,
     phone_number varchar(255) NOT NULL,
     mentor_id int NOT NULL,
-    CONSTRAINT FK_EmployeeMentorID FOREIGN KEY (mentor_id) REFERENCES Employee(id)
+    start_date date NOT NULL,
+    department_name varchar(255) NOT NULL,
+    CONSTRAINT FK_EmployeeMentorID FOREIGN KEY (mentor_id) REFERENCES Employee(id),
+    CONSTRAINT FK_EmployeeDepartmentName FOREIGN KEY (department_name) REFERENCES Department(department_name)
 );
 
 CREATE TABLE Doctor
@@ -181,22 +184,12 @@ CREATE TABLE Doctor
     CONSTRAINT FK_DoctorID FOREIGN KEY (id) REFERENCES Employee(id)
 );
 
-CREATE TABLE WorksAt
-(   
-    employee_id int NOT NULL PRIMARY KEY,  
-    department_name varchar(255) NOT NULL,
-    start_date date NOT NULL,
-    CONSTRAINT FK_WorksAtEmployeeID FOREIGN KEY (employee_id) REFERENCES Employee(id),
-    CONSTRAINT FK_WorksAtDepartmentName FOREIGN KEY (department_name) REFERENCES Department(department_name)
-);
-
 CREATE TABLE Nurse 
 (
     id int NOT NULL PRIMARY KEY,
     degree varchar(255) NOT NULL,
     CONSTRAINT FK_NurseID FOREIGN KEY (id) REFERENCES Employee(id)
 );
-
 
 CREATE TABLE Treating
 (
@@ -223,7 +216,6 @@ DROP TABLE patient CASCADE;
 DROP TABLE department CASCADE;
 DROP TABLE employee CASCADE;
 DROP TABLE doctor CASCADE;
-DROP TABLE worksat CASCADE;
 DROP TABLE nurse CASCADE;
 DROP TABLE treating CASCADE;
 
