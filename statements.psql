@@ -1,4 +1,4 @@
--- Create tables
+------------ Create tables ------------
 
 CREATE TABLE Books 
 (
@@ -88,7 +88,9 @@ CREATE TABLE Transactions
     REFERENCES Fines(borrowing_id)
 );
 
--- insert students
+------------ Insertions ------------
+
+# Insert students
 
 INSERT INTO Users (user_id, email, full_name, address) VALUES (1, 'email1@kth.se', 'student1', 'address1');
 INSERT INTO Students (user_id, program) VALUES (1, 'program1');
@@ -105,12 +107,12 @@ INSERT INTO Students (user_id, program) VALUES (4, 'program4');
 INSERT INTO Users (user_id, email, full_name, address) VALUES (5, 'email5@kth.se', 'student5', 'address5');
 INSERT INTO Students (user_id, program) VALUES (5, 'program5');
 
--- insert admins
+# Insert admins
 
 INSERT INTO Users (user_id, email, full_name, address) VALUES (6, 'email6@kth.se', 'admin6', 'address6');
 INSERT INTO Admins (user_id, phone_number, department) VALUES (6, 'phone_number6', 'department6');
 
--- insert Books
+# Insert Books
 
 INSERT INTO Books (isbn, title, language, date_of_publication, publisher, author, genre) VALUES ('9780552160896', 'Angels And Demons', 'Engelska', '2009-08-28', 'Transworld Publishers Ltd', 'Dan Brown', 'Thriller');
 INSERT INTO Books (isbn, title, language, date_of_publication, publisher, author, genre, prequel) VALUES ('9780552159715', 'The Da Vinci Code', 'Engelska', '2009-08-28', 'Transworld Publishers Ltd', 'Dan Brown', 'Thriller', 'Angels And Demons');
@@ -118,7 +120,7 @@ INSERT INTO Books (isbn, title, language, date_of_publication, publisher, author
 INSERT INTO Books (isbn, title, edition, language, date_of_publication, publisher, author, genre) VALUES ('9789129723946', 'Harry Potter och de vises sten', '8', 'Svenska', '2015-10-01', 'Rabén & Sjögren', 'J.K. Rowling', 'Fantasy');
 INSERT INTO Books (isbn, title, edition, language, date_of_publication, publisher, author, genre, prequel) VALUES ('9789129701364', 'Harry Potter och Hemligheternas kammare', '2', 'Svenska', '2016-10-06', 'Rabén & Sjögren', 'J.K. Rowling', 'Fantasy', 'Harry Potter och de vises sten');
 
--- insert Copies
+# Insert Copies
 
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (1, '9780552160896', 'Ingen'); /* Angels And Demons */
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (2, '9780552160896', 'Sid. 3 riven'); /* Angels And Demons*/
@@ -128,19 +130,19 @@ INSERT INTO Copies (physical_id, isbn, damage) VALUES (5, '9780552159715', 'Solb
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (6, '9780552149525', 'Kaffefläck'); /*The Lost Symbol*/
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (7, '9789129723946', 'Klotter på första sidan'); /*Harry Potter och de vises sten*/
 
--- insert Loans
--- two Books that have not been returned, and two that have been returned
+# Insert Loans
+# Two Books that have not been returned, and two that have been returned
 
 INSERT INTO Loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date, date_of_return) VALUES (1, 1, 1, '2023-10-01', '2023-10-08', '2023-10-07'); /*Angels And Demons*/
 INSERT INTO Loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date, date_of_return) VALUES (2, 3, 2, '2023-10-03', '2023-10-10', '2023-10-07'); /*Angels And Demons*/
 INSERT INTO Loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date) VALUES (3, 5, 3, '2023-10-05', '2023-10-12'); /*The Da Vinci Code*/
 INSERT INTO Loans (borrowing_id, physical_id, user_id, date_of_borrowing, due_date) VALUES (4, 7, 4, '2023-10-06', '2023-10-13'); /*The Da Vinci Code*/
 
--- insert fines
+# Insert fines
 
 INSERT INTO Fines (borrowing_id, amount) VALUES (4, 100);
 
--- Select statements
+------------ Queries ------------
 
 SELECT full_name AS name FROM Users;
 
@@ -151,7 +153,7 @@ SELECT title FROM Books;
 SELECT * FROM Fines;
 
 
--- p+
+------------ P+ ------------
 
 CREATE TABLE Patient 
 (
