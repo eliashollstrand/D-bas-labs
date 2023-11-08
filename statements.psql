@@ -69,7 +69,7 @@ CREATE TABLE Loans
  
 CREATE TABLE Fines
 (
-    borrowing_id int, 
+    borrowing_id int PRIMARY KEY, 
     amount int NOT NULL, 
     CONSTRAINT FK_FineBorrowingID
     FOREIGN KEY (borrowing_id)
@@ -85,7 +85,7 @@ CREATE TABLE Transactions
     payment_method varchar(255) NOT NULL,
     CONSTRAINT FK_TransactionBorrowingID
     FOREIGN KEY (borrowing_id)
-    REFERENCES Loans(borrowing_id)
+    REFERENCES Fines(borrowing_id)
 );
 
 -- insert students
@@ -120,7 +120,7 @@ INSERT INTO Books (isbn, title, edition, language, date_of_publication, publishe
 
 -- insert Copies
 
-INSERT INTO Copies (physical_id, isbn, damage) VALUES (1, '9780552160896', 'ingen'); /* Angels And Demons */
+INSERT INTO Copies (physical_id, isbn, damage) VALUES (1, '9780552160896', 'Ingen'); /* Angels And Demons */
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (2, '9780552160896', 'Sid. 3 riven'); /* Angels And Demons*/
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (3, '9780552159715', 'Tuggummi mellan sid. 10-11'); /* The Da Vinci Code*/
 INSERT INTO Copies (physical_id, isbn, damage) VALUES (4, '9780552159715', 'Ingen'); /*The Da Vinci Code*/
@@ -151,7 +151,74 @@ SELECT title FROM Books;
 SELECT * FROM Fines;
 
 
+-- p+
 
+CREATE TABLE Patient 
+(
+    id int NOT NULL PRIMARY KEY,
+    diagnosises varchar(255) NOT NULL,
+    name varchar(255) NOT NULL,
+    age int NOT NULL
+);
+
+CREATE TABLE Department 
+(
+    department_name varchar(255) NOT NULL PRIMARY KEY,
+    buildingNr int NOT NULL
+);
+
+CREATE TABLE Employee
+(
+    id int NOT NULL PRIMARY KEY,
+    name varchar(255) NOT NULL,
+    phone_number varchar(255) NOT NULL,
+    mentor_id int NOT NULL,
+    department_name varchar(255) NOT NULL,
+    CONSTRAINT FK_EmployeeMentorID
+    FOREIGN KEY (mentor_id)
+    REFERENCES Employee(id),
+    CONSTRAINT FK_EmployeeDepartmentName
+    FOREIGN KEY (department_name)
+    REFERENCES Department(department_name)
+);
+
+CREATE TABLE Doctor
+(
+    id int NOT NULL PRIMARY KEY,
+    specialization varchar(255) NOT NULL,
+    roomNr int NOT NULL,
+    patient_id int NOT NULL,
+    CONSTRAINT FK_DoctorID
+    FOREIGN KEY (id)
+    REFERENCES Employee(id),
+    CONSTRAINT FK_DoctorPatientID
+    FOREIGN KEY (patient_id)
+    REFERENCES Patient(id)
+);
+
+CREATE TABLE WorksAt
+(   
+    employee_id int NOT NULL,
+    department_name varchar(255) NOT NULL,
+    start_date date NOT NULL,
+    CONSTRAINT PK_WorksAt 
+    PRIMARY KEY (employee_id, department_name),
+    CONSTRAINT FK_WorksAtEmployeeID
+    FOREIGN KEY (employee_id)
+    REFERENCES Employee(id),
+    CONSTRAINT FK_WorksAtDepartmentName
+    FOREIGN KEY (department_name)
+    REFERENCES Department(department_name)
+);
+
+CREATE TABLE Nurse 
+(
+    id int NOT NULL PRIMARY KEY,
+    degree varchar(255) NOT NULL,
+    CONSTRAINT FK_NurseID
+    FOREIGN KEY (id)
+    REFERENCES Employee(id)
+);
 
 
 
