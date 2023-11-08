@@ -74,14 +74,14 @@ CREATE TABLE Transactions
     CONSTRAINT FK_TransactionBorrowingID FOREIGN KEY (borrowing_id) REFERENCES Fines(borrowing_id)
 );
 
-GRANT ALL PRIVILEGES ON TABLE users TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE admins TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE students TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE books TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE copies TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE transactions TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE fines TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE loans TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE users TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE admins TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE students TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE books TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE copies TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE transactions TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE fines TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE loans TO <kth_id>;
 
 ------------ Insertions ------------
 
@@ -200,6 +200,12 @@ CREATE TABLE Treating
     CONSTRAINT FK_TreatingPatientID FOREIGN KEY (patient_id) REFERENCES Patient(id)
 );
 
+GRANT ALL PRIVILEGES ON TABLE patient TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE department TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE employee TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE doctor TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE nurse TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE treating TO <kth_id>;
 
 ----- DROP TABLES -----
 DROP TABLE users CASCADE;
