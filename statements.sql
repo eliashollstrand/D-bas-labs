@@ -169,7 +169,7 @@ CREATE TABLE Employee
     id int NOT NULL PRIMARY KEY,
     name varchar(255) NOT NULL,
     phone_number varchar(255) NOT NULL,
-    mentor_id int NOT NULL,
+    mentor_id int,
     start_date date NOT NULL,
     department_name varchar(255) NOT NULL,
     CONSTRAINT FK_EmployeeMentorID FOREIGN KEY (mentor_id) REFERENCES Employee(id),
@@ -206,6 +206,11 @@ GRANT ALL PRIVILEGES ON TABLE employee TO <kth_id>;
 GRANT ALL PRIVILEGES ON TABLE doctor TO <kth_id>;
 GRANT ALL PRIVILEGES ON TABLE nurse TO <kth_id>;
 GRANT ALL PRIVILEGES ON TABLE treating TO <kth_id>;
+
+
+INSERT INTO Department (department_name, buildingNr) VALUES ('department1', 1);
+INSERT INTO Employee (id, name, phone_number, start_date, department_name) VALUES (1, 'employee1', 'phone_number1','2020-01-01', 'department1');
+INSERT INTO Employee (id, name, phone_number, mentor_id, start_date, department_name) VALUES (2, 'employee2', 'phone_number2', 1, '2020-01-01', 'department1');
 
 ----- DROP TABLES -----
 DROP TABLE users CASCADE;
