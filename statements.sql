@@ -4,7 +4,7 @@ CREATE TABLE Books
 (
     isbn char(13) NOT NULL PRIMARY KEY,
     title varchar(255) NOT NULL,
-    edition varchar(255), 
+    edition int, 
     language varchar(255), 
     date_of_publication date, 
     publisher varchar(255), 
