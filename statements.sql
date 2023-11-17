@@ -74,14 +74,14 @@ CREATE TABLE Transactions
     CONSTRAINT FK_TransactionBorrowingID FOREIGN KEY (borrowing_id) REFERENCES Fines(borrowing_id)
 );
 
-GRANT ALL PRIVILEGES ON TABLE users TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE admins TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE students TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE books TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE copies TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE transactions TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE fines TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE loans TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE users TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE admins TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE students TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE books TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE copies TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE transactions TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE fines TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE loans TO hollstra;
 
 ------------ Insertions ------------
 
@@ -200,12 +200,12 @@ CREATE TABLE Treating
     CONSTRAINT FK_TreatingPatientID FOREIGN KEY (patient_id) REFERENCES Patient(id)
 );
 
-GRANT ALL PRIVILEGES ON TABLE patient TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE department TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE employee TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE doctor TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE nurse TO <kth_id>;
-GRANT ALL PRIVILEGES ON TABLE treating TO <kth_id>;
+GRANT ALL PRIVILEGES ON TABLE patient TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE department TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE employee TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE doctor TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE nurse TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE treating TO hollstra;
 
 
 INSERT INTO Department (department_name, buildingNr) VALUES ('department1', 1);
@@ -231,4 +231,95 @@ DROP TABLE nurse CASCADE;
 DROP TABLE treating CASCADE;
 
 
+------------------- Lab 2 -------------------
+
+GRANT ALL PRIVILEGES ON TABLE users TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE admins TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE students TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE books TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE transactions TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE fines TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE borrowing TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE edition TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE resources TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE prequels TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE author TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE language TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE genre TO hollstra;
+
+-- 1)
+SELECT title, string_agg(genre.genre, ',' )
+FROM books, genre
+WHERE books.bookid = genre.bookid
+GROUP BY title
+ORDER BY title
+
+-- 2)
+SELECT title, rank
+FROM (
+    SELECT title,RANK() OVER (ORDER BY COUNT(*) DESC) AS rank
+    FROM books, genre, borrowing, resources
+    WHERE books.bookid = genre.bookid
+      AND genre.genre = 'RomCom'
+      AND borrowing.physicalid = resources.physicalid
+      AND resources.bookid = books.bookid
+    GROUP BY title
+    ORDER BY rank
+) AS top5
+WHERE rank <= 5
+
+-- 3)
+SELECT week, borrowed, returned, late
+FROM (
+    SELECT week, COUNT(*) AS borrowed
+    FROM (
+        SELECT DATE_PART('week', dob) AS week
+        FROM borrowing
+    ) AS weeks
+    GROUP BY week
+) AS borrowed
+NATURAL JOIN(
+    SELECT week, COUNT(*) AS returned
+    FROM (
+        SELECT DATE_PART('week', dor) AS week
+        FROM borrowing
+        WHERE dor IS NOT NULL
+    ) AS weeks
+    GROUP BY week
+) AS returned
+NATURAL JOIN (
+    SELECT week, COUNT(*) AS late
+    FROM (
+        SELECT DATE_PART('week', dor) AS week
+        FROM borrowing
+        WHERE dor IS NOT NULL
+            and dor > doe
+    ) AS weeks
+    GROUP BY week
+) AS late
+WHERE week <= 30
+ORDER BY week
+
+-- 4)
+SELECT title, every(prequelid IS NOT NULL) AS every, dob
+FROM borrowing
+NATURAL JOIN resources
+NATURAL JOIN books
+LEFT JOIN prequels ON books.bookid = prequels.bookid
+WHERE DATE_PART('month', dob) = 2
+GROUP BY title, dob
+ORDER BY title
+
+-- 5)
+WITH RECURSIVE prequel_TABLE AS (
+    SELECT bookid, prequelid
+    FROM prequels
+    WHERE bookid = 8713
+    UNION SELECT p.bookid, p.prequelid
+          FROM prequels p
+          INNER JOIN prequel_TABLE t ON t.prequelid = p.bookid
+
+) SELECT title, bookid, prequelid
+FROM prequel_TABLE
+NATURAL JOIN books
 
