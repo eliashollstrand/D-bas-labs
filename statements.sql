@@ -311,6 +311,7 @@ GROUP BY title, dob
 ORDER BY title
 
 -- 5)
+-- Attempt 1
 WITH RECURSIVE prequel_TABLE AS (
     SELECT bookid, prequelid
     FROM prequels
@@ -322,4 +323,21 @@ WITH RECURSIVE prequel_TABLE AS (
 ) SELECT title, bookid, prequelid
 FROM prequel_TABLE
 NATURAL JOIN books
+
+-- Attempt 2 (working)
+-- uses the first book in the series as input, and finds all sequels to that book recursively
+-- then joins the book table to get the title of the books.
+-- Creates a new column for the bookid of the prequel book, and fills it with NULL for the first book in the series
+WITH RECURSIVE prequel_TABLE AS (
+    SELECT bookid, NULL::integer AS prequelid
+    FROM books
+    WHERE bookid = 76418 --The first book in the series
+    UNION ALL
+    SELECT p.bookid, p.prequelid
+    FROM prequels p
+    INNER JOIN prequel_TABLE t ON t.bookid = p.prequelid
+)
+SELECT books.title, prequel_TABLE.bookid, prequel_TABLE.prequelid
+FROM prequel_TABLE
+NATURAL JOIN books;
 
