@@ -341,3 +341,39 @@ SELECT books.title, prequel_TABLE.bookid, prequel_TABLE.prequelid
 FROM prequel_TABLE
 NATURAL JOIN books;
 
+-- 6)
+
+-- partly working query, returns authors with books returned in may and authors with no books returned at all
+SELECT author, bool_or(dor IS NOT NULL) AS returned
+FROM author
+LEFT JOIN books ON author.bookid = books.bookid
+LEFT JOIN resources ON books.bookid = resources.bookid
+LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
+WHERE DATE_PART('month', dor) = 5 OR dor IS NULL
+GROUP BY author
+ORDER BY returned DESC
+
+ -- partly working query, does not return authors with no books returned in may
+SELECT author, bool_or(dor IS NOT NULL) AS returned
+FROM borrowing
+NATURAL JOIN resources
+NATURAL JOIN books
+NATURAL JOIN author
+WHERE DATE_PART('month', dor) = 5
+GROUP BY author
+ORDER BY returned DESC
+
+ -- working query (wohooo)
+SELECT author, bool_or(date_part('month', dor) = 5 AND dor IS NOT NULL) AS returned_in_may
+FROM author
+LEFT JOIN books ON author.bookid = books.bookid
+LEFT JOIN resources ON books.bookid = resources.bookid
+LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
+GROUP BY author
+ORDER BY returned_in_may DESC
+
+// select count of authors unique authors to verify that the number of authors is correct
+SELECT COUNT(DISTINCT author) FROM author
+
+
+
