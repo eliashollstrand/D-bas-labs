@@ -338,39 +338,12 @@ LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
 GROUP BY author
 ORDER BY returned_in_may DESC, author
 
-SELECT author, bool_or(date_part('month', dor) = 5 AND dor IS NOT NULL) AS returned_in_may
-FROM author
-NATURAL JOIN books
-NATURAL JOIN resources
-NATURAL JOIN borrowing 
-GROUP BY author
-ORDER BY returned_in_may DESC
-
--- not working
-SELECT author,
-CASE WHEN date_part('month', dor) = 5 AND dor IS NOT NULL THEN 't' ELSE 'f' END AS returned_in_may
-FROM author
-left JOIN books
-NATURAL JOIN resources
-NATURAL JOIN borrowing
-GROUP BY author
-ORDER BY returned_in_may DESC
-
-
 --- check
 SELECT *
 FROM author
 LEFT JOIN books ON author.bookid = books.bookid
 LEFT JOIN resources ON books.bookid = resources.bookid
 LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
-
-SELECT author,
-CASE WHEN date_part('month', dor) = 5 AND dor IS NOT NULL THEN 't' ELSE 'f' END AS returned_in_may
-FROM author
-NATURAL JOIN resources
-NATURAL JOIN borrowing
-GROUP BY author
-ORDER BY returned_in_may DESC
 
 SELECT *
 FROM author
