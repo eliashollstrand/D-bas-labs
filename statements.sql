@@ -253,6 +253,7 @@ FROM books, genre
 WHERE books.bookid = genre.bookid
 GROUP BY title
 ORDER BY title
+COLLATE "C";
 
 -- 2)
 SELECT title, rank
@@ -309,29 +310,16 @@ LEFT JOIN prequels ON books.bookid = prequels.bookid
 WHERE DATE_PART('month', dob) = 2
 GROUP BY title, dob
 ORDER BY title
+COLLATE "C";
 
 -- 5)
--- Attempt 1
-WITH RECURSIVE prequel_TABLE AS (
-    SELECT bookid, prequelid
-    FROM prequels
-    WHERE bookid = 8713
-    UNION SELECT p.bookid, p.prequelid
-          FROM prequels p
-          INNER JOIN prequel_TABLE t ON t.prequelid = p.bookid
-
-) SELECT title, bookid, prequelid
-FROM prequel_TABLE
-NATURAL JOIN books
-
--- Attempt 2 (working)
--- uses the first book in the series as input, and finds all sequels to that book recursively
+-- Uses the first book in the series as input, and finds all sequels to that book recursively
 -- then joins the book table to get the title of the books.
 -- Creates a new column for the bookid of the prequel book, and fills it with NULL for the first book in the series
 WITH RECURSIVE prequel_TABLE AS (
     SELECT bookid, NULL::integer AS prequelid
     FROM books
-    WHERE bookid = 76418 --The first book in the series
+    WHERE bookid = 76418 -- The first book in the series
     UNION ALL
     SELECT p.bookid, p.prequelid
     FROM prequels p
@@ -342,38 +330,52 @@ FROM prequel_TABLE
 NATURAL JOIN books;
 
 -- 6)
-
--- partly working query, returns authors with books returned in may and authors with no books returned at all
-SELECT author, bool_or(dor IS NOT NULL) AS returned
-FROM author
-LEFT JOIN books ON author.bookid = books.bookid
-LEFT JOIN resources ON books.bookid = resources.bookid
-LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
-WHERE DATE_PART('month', dor) = 5 OR dor IS NULL
-GROUP BY author
-ORDER BY returned DESC
-
- -- partly working query, does not return authors with no books returned in may
-SELECT author, bool_or(dor IS NOT NULL) AS returned
-FROM borrowing
-NATURAL JOIN resources
-NATURAL JOIN books
-NATURAL JOIN author
-WHERE DATE_PART('month', dor) = 5
-GROUP BY author
-ORDER BY returned DESC
-
- -- working query (wohooo)
 SELECT author, bool_or(date_part('month', dor) = 5 AND dor IS NOT NULL) AS returned_in_may
 FROM author
 LEFT JOIN books ON author.bookid = books.bookid
 LEFT JOIN resources ON books.bookid = resources.bookid
 LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
 GROUP BY author
+ORDER BY returned_in_may DESC, author
+
+SELECT author, bool_or(date_part('month', dor) = 5 AND dor IS NOT NULL) AS returned_in_may
+FROM author
+NATURAL JOIN books
+NATURAL JOIN resources
+NATURAL JOIN borrowing 
+GROUP BY author
 ORDER BY returned_in_may DESC
 
-// select count of authors unique authors to verify that the number of authors is correct
-SELECT COUNT(DISTINCT author) FROM author
+-- not working
+SELECT author,
+CASE WHEN date_part('month', dor) = 5 AND dor IS NOT NULL THEN 't' ELSE 'f' END AS returned_in_may
+FROM author
+left JOIN books
+NATURAL JOIN resources
+NATURAL JOIN borrowing
+GROUP BY author
+ORDER BY returned_in_may DESC
 
 
+--- check
+SELECT *
+FROM author
+LEFT JOIN books ON author.bookid = books.bookid
+LEFT JOIN resources ON books.bookid = resources.bookid
+LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
 
+SELECT author,
+CASE WHEN date_part('month', dor) = 5 AND dor IS NOT NULL THEN 't' ELSE 'f' END AS returned_in_may
+FROM author
+NATURAL JOIN resources
+NATURAL JOIN borrowing
+GROUP BY author
+ORDER BY returned_in_may DESC
+
+SELECT *
+FROM author
+LEFT JOIN books ON author.bookid = books.bookid
+LEFT JOIN resources ON books.bookid = resources.bookid
+LEFT JOIN (SELECT *
+           FROM borrowing
+           WHERE dor IS NOT NULL) AS borrowing ON resources.physicalid = borrowing.physicalid;
