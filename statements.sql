@@ -288,7 +288,7 @@ NATURAL JOIN(
     ) AS weeks
     GROUP BY week
 ) AS returned
-NATURAL JOIN (
+Natural LEFT JOIN (
     SELECT week, COUNT(*) AS late
     FROM (
         SELECT DATE_PART('week', dor) AS week
@@ -299,7 +299,7 @@ NATURAL JOIN (
     GROUP BY week
 ) AS late
 WHERE week <= 30
-ORDER BY week
+ORDER BY week;
 
 -- 4)
 SELECT title, every(prequelid IS NOT NULL) AS every, dob
