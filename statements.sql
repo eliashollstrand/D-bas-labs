@@ -450,4 +450,139 @@ CREATE TABLE TRANSACTIONS
  DoP DATE NOT NULL
  );
  
-drop table admins,author,books,borrowing,edition,fines,genre,language,prequels,resources,students,transactions,users; 
+-- drop table admins,author,books,borrowing,edition,fines,genre,language,prequels,resources,students,transactions,users; 
+
+
+-- 2) MONDIAL DATABASE 
+
+
+-- 2.1) 
+
+SELECT country.name, COUNT(borders.country1) AS num_neighbors
+FROM country, borders
+WHERE country.code = borders.country1
+GROUP BY country.name
+ORDER BY num_neighbors;
+
+
+-- 2.2) Write a query for all the languages in the database, that states number of speakers and sorts them from most spoken to least spoken.
+
+-- The total sum is not correct, i dont know why. Calculated it manually for mandarin, and i get the same as the query
+SELECT
+    spoken.language,
+    COALESCE(ROUND(SUM((spoken.percentage / 100) * country.population), 0), 0) AS num_speakers
+FROM
+    country
+LEFT JOIN
+    spoken ON spoken.country = country.code
+GROUP BY
+    spoken.language, country.population
+ORDER BY
+    num_speakers DESC;
+
+-- DEBUG
+SELECT
+    country, language, percentage, population, ROUND((percentage / 100) * population, 0) AS num_speakers
+FROM
+    spoken
+LEFT JOIN
+    country ON country.code = spoken.country;
+GROUP BY
+    spoken.language, country.population
+
+-- DEBUG
+SELECT
+    country, language, percentage, population, ROUND((percentage / 100) * population, 0) AS num_speakers
+FROM
+    spoken
+LEFT JOIN
+    country ON country.code = spoken.country
+ORDER BY language;
+
+
+--DEBUG
+SELECT
+    country, language, percentage, population, coalesce(ROUND((percentage / 100) * population, 0), 0) AS num_speakers
+FROM
+    spoken
+LEFT JOIN
+    country ON country.code = spoken.country
+ORDER BY language;
+
+
+-- 2.3) Which bordering countries have the greatest contrast in wealth? We define wealth as GDP.
+-- Tip: Remember to check the difference in wealth in both directions so that you don’t end up with just half the results. E.g. Germany and Switzerland but also Switzerland and Germany.
+
+-- WORKS, BUT WHAT TO DO WITH NULL VALUES??
+SELECT
+    borders.country1,
+    e1.gdp AS GDP1,
+    borders.country2,
+    e2.gdp AS GDP2,
+    CASE
+        WHEN e1.gdp > e2.gdp THEN ROUND(e1.gdp / e2.gdp, 0)
+        WHEN e2.gdp > e1.gdp THEN ROUND(e2.gdp / e1.gdp, 0)
+        ELSE 1
+    END AS ratio
+FROM
+    borders
+LEFT JOIN
+    country AS c1 ON c1.code = borders.country1
+LEFT JOIN
+    country AS c2 ON c2.code = borders.country2
+LEFT JOIN
+    economy AS e1 ON e1.country = c1.code
+LEFT JOIN
+    economy AS e2 ON e2.country = c2.code
+ORDER BY ratio DESC;
+
+
+
+
+
+GRANT ALL PRIVILEGES ON TABLE airport TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE borders TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE city TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE citylocalname TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE cityothername TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE citypops TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE continent TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE country TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE countrylocalname TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE countryothername TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE countrypops TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE desert TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE economy TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE econompasses TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE ethnicgroup TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_estuary TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_island TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_lake TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_mountain TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_river TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_sea TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE geo_source TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE island TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE islandin TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE ismember TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE lake TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE lakeonisland TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE language TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE located TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE locatedon TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE mergeswith TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE mountain TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE mountainonisland TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE organization TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE politics TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE population TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE province TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE provincelocalname TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE provinceothername TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE provpops TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE religion TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE river TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE riveronisland TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE riverthrough TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE sea TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE spoken TO hollstra;
