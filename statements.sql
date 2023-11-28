@@ -537,6 +537,300 @@ LEFT JOIN
 ORDER BY ratio DESC;
 
 
+---------- P+ ----------
+WITH RECURSIVE reachable AS (
+    SELECT country1, country2, 1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S'
+    UNION ALL
+    SELECT b.country1, b.country2, r.num_crossings + 1
+    FROM borders b
+    INNER JOIN reachable r ON (r.country2 = b.country1 OR r.country2 = b.country2) AND r.num_crossings < 5 AND r.country2 != 'S'
+
+)
+SELECT country2, MIN(num_crossings) AS min_crossings
+FROM reachable
+GROUP BY country2
+ORDER BY country2;
+
+
+WITH RECURSIVE reachable AS (
+    SELECT country1, country2, 1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S'
+    UNION ALL
+    SELECT r.country2, b.country1, r.num_crossings + 1
+    FROM borders b
+    INNER JOIN reachable r ON (r.country2 = b.country2 AND b.country2 != r.country1) AND r.num_crossings < 5
+)
+SELECT *
+FROM reachable
+
+
+ --- Almost working solution, but sweden is included in the result
+WITH RECURSIVE reachable AS (
+    SELECT country1::text AS country, country2::text AS next_country, 1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S' OR country2 = 'S'
+
+    UNION ALL
+
+    SELECT
+        CASE
+            WHEN r.next_country = b.country1 THEN b.country2
+            WHEN r.next_country = b.country2 THEN b.country1
+        END AS country,
+        b.country1,
+        r.num_crossings + 1
+    FROM
+        borders b
+    INNER JOIN
+        reachable r ON
+            (r.next_country = b.country1 AND b.country2 != r.country) OR
+            (r.next_country = b.country2 AND b.country1 != r.country)
+    WHERE
+        r.num_crossings < 5
+)
+SELECT country, MIN(num_crossings) AS min_crossings
+FROM reachable
+GROUP BY country
+ORDER BY min_crossings;
+
+
+
+WITH RECURSIVE reachable AS (
+    SELECT country1::text AS country, country2::text AS next_country, 1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S' OR country2 = 'S'
+
+    UNION ALL
+
+    SELECT
+        CASE
+            WHEN r.next_country = b.country1 THEN b.country2
+            WHEN r.next_country = b.country2 THEN b.country1
+        END AS country,
+        b.country1,
+        r.num_crossings + 1
+    FROM
+        borders b
+    INNER JOIN
+        reachable r ON
+            (r.next_country = b.country1 AND b.country2 != r.country) OR
+            (r.next_country = b.country2 AND b.country1 != r.country)
+    WHERE
+        r.num_crossings < 5
+)
+SELECT next_country as country, min(num_crossings) AS num
+FROM reachable
+GROUP BY next_country
+ORDER BY num;
+
+
+-- Working solution (I think)
+WITH RECURSIVE reachable AS (
+    SELECT
+        CASE
+            WHEN country1 = 'S' THEN country1
+            WHEN country2 = 'S' THEN country2
+        END AS country,
+        CASE
+            WHEN country1 = 'S' THEN country2
+            WHEN country2 = 'S' THEN country1
+        END AS next_country,
+        1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S' OR country2 = 'S'
+
+    UNION ALL
+
+    SELECT
+        CASE
+            WHEN r.next_country = b.country1 THEN b.country2
+            WHEN r.next_country = b.country2 THEN b.country1
+        END AS country,
+        b.country1,
+        r.num_crossings + 1
+    FROM
+        borders b
+    INNER JOIN
+        reachable r ON
+            (r.next_country = b.country1 AND b.country2 != r.country) OR
+            (r.next_country = b.country2 AND b.country1 != r.country)
+    WHERE
+        r.num_crossings < 5
+)
+SELECT next_country as code, name, MIN(num_crossings) AS min_crossings
+FROM reachable
+LEFT JOIN country ON country.code = next_country
+GROUP BY next_country, name
+ORDER BY min_crossings;
+
+
+-- P+ 2 
+
+Consider a river system as a main river and all the tributary rivers that flow into it, and their respective tributary rivers and so on. Present a table that shows the names of the rivers of the longest branch(es)* of each river system and the total length of each shown branch, as well as the number of rivers in each and the rank of the number of rivers in the branch. Start from the rivers the Nile, Amazon, Yangtze, Rhein, Donau and Mississippi and explore from there. You are allowed to hard-code the names of those rivers.
+
+
+WITH RECURSIVE river_branches AS (
+    SELECT
+        river,
+        river AS main_river,
+        river AS branch,
+        river::VARCHAR(100) AS path,
+        length,
+        1 AS num_rivers,
+        1 AS rank
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.river,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.river,
+        r.length,
+        rb.num_rivers + 1,
+        rb.rank
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON r.main_river = rb.branch
+)
+SELECT
+    main_river,
+    branch,
+    path,
+    SUM(length) AS total_length,
+    num_rivers,
+    rank
+FROM
+    river_branches
+GROUP BY
+    main_river, branch, path, num_rivers, rank
+ORDER BY
+    main_river, num_rivers DESC, total_length DESC;
+
+
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river::text AS path,  -- Explicitly cast to text
+        length,
+        1 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 1
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+)
+SELECT
+    name,
+    main_river,
+    branch,
+    path,
+    SUM(length) AS total_length,
+    num_rivers
+FROM
+    river_branches
+GROUP BY
+    name, main_river, branch, path, num_rivers
+ORDER BY
+    main_river, num_rivers DESC, total_length DESC;
+
+
+
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river || ' -> ' || name::text AS path,  -- Explicitly cast to text
+        length,
+        1 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 1
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+)
+SELECT
+    main_river,
+    path,
+    SUM(length) AS total_length,
+    num_rivers
+FROM
+    river_branches
+GROUP BY
+    main_river, path, num_rivers
+ORDER BY
+    main_river, num_rivers DESC, total_length DESC;
+
+
+
+--- Working but ranking and displaying correct format not working
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river || ' -> ' || name::text AS path,
+        length,
+        1 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 1
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+)
+SELECT
+    RANK() OVER (PARTITION BY main_river ORDER BY num_rivers DESC) AS rank,
+    path,
+    SUM(length) AS total_length,
+    num_rivers
+FROM
+    river_branches
+GROUP BY
+    main_river, path, num_rivers
+ORDER BY
+    rank;
 
 
 
