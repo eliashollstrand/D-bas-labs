@@ -802,7 +802,7 @@ WITH RECURSIVE river_branches AS (
         river AS branch,
         river || ' -> ' || name::text AS path,
         length,
-        1 AS num_rivers
+        2 AS num_rivers
     FROM river
     WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
 
@@ -833,6 +833,145 @@ ORDER BY
     rank;
 
 
+
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river || ' -> ' || name::text AS path,
+        length,
+        2 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 2
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+)
+SELECT
+    RANK() OVER (PARTITION BY main_river ORDER BY num_rivers asc) AS rank,
+    path,
+    SUM(length) AS total_length,
+    num_rivers
+FROM
+    river_branches
+GROUP BY
+    main_river
+ORDER BY
+    rank, main_river, total_length desc;
+
+    
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river || ' -> ' || name::text AS path,
+        length,
+        2 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 1
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+),
+max_num_rivers AS (
+    SELECT
+        main_river,
+        MIN(num_rivers) AS min_num_rivers
+    FROM
+        river_branches
+    GROUP BY
+        main_river
+)
+SELECT
+    rb.path,
+    rb.num_rivers,
+    SUM(length) AS total_length,
+    RANK() OVER (ORDER BY mnr.min_num_rivers) AS rank
+FROM
+    river_branches rb
+INNER JOIN
+    max_num_rivers mnr ON rb.main_river = mnr.main_river
+GROUP BY
+    rb.path,
+    rb.num_rivers,
+    mnr.min_num_rivers
+ORDER BY
+    rank;
+
+
+
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river || ' -> ' || name::text AS path,
+        length,
+        2 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 1
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+),
+max_num_rivers AS (
+    SELECT
+        main_river,
+        MAX(num_rivers) AS max_num_rivers
+    FROM
+        river_branches
+    GROUP BY
+        main_river
+)
+SELECT
+    rb.path,
+    rb.num_rivers,
+    RANK() OVER (ORDER BY mnr.max_num_rivers) AS rank
+FROM
+    river_branches rb
+INNER JOIN
+    max_num_rivers mnr ON rb.main_river = mnr.main_river AND rb.num_rivers = mnr.max_num_rivers
+ORDER BY
+    rank;
+
+
+
+--- best working at the bottom
 
 GRANT ALL PRIVILEGES ON TABLE airport TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE borders TO hollstra;
@@ -880,3 +1019,50 @@ GRANT ALL PRIVILEGES ON TABLE riveronisland TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE riverthrough TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE sea TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE spoken TO hollstra;
+
+
+-- needs total length 
+WITH RECURSIVE river_branches AS (
+    SELECT
+        name,
+        river AS main_river,
+        river AS branch,
+        river || ' -> ' || name::text AS path,
+        length,
+        2 AS num_rivers
+    FROM river
+    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+
+    UNION ALL
+
+    SELECT
+        r.name,
+        rb.main_river,
+        r.river,
+        rb.path || ' -> ' || r.name,
+        r.length,
+        rb.num_rivers + 1
+    FROM
+        river r
+    INNER JOIN
+        river_branches rb ON rb.name = r.river
+),
+max_num_rivers AS (
+    SELECT
+        main_river,
+        MAX(num_rivers) AS max_num_rivers
+    FROM
+        river_branches
+    GROUP BY
+        main_river
+)
+SELECT
+    RANK() OVER (ORDER BY mnr.max_num_rivers) AS rank,
+    rb.path,
+    rb.num_rivers
+FROM
+    river_branches rb
+INNER JOIN
+    max_num_rivers mnr ON rb.main_river = mnr.main_river AND rb.num_rivers = mnr.max_num_rivers
+ORDER BY
+    rank;
