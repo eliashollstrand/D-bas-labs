@@ -458,10 +458,10 @@ CREATE TABLE TRANSACTIONS
 
 -- 2.1) 
 
-SELECT country.name, COUNT(borders.country1) AS num_neighbors
-FROM country, borders
-WHERE country.code = borders.country1
-GROUP BY country.name
+SELECT country.code, COUNT(*) AS num_neighbors
+FROM country
+JOIN borders ON country.code = borders.country1 OR country.code = borders.country2
+GROUP BY country.code
 ORDER BY num_neighbors;
 
 
@@ -476,38 +476,9 @@ FROM
 LEFT JOIN
     spoken ON spoken.country = country.code
 GROUP BY
-    spoken.language, country.population
+    spoken.language
 ORDER BY
     num_speakers DESC;
-
--- DEBUG
-SELECT
-    country, language, percentage, population, ROUND((percentage / 100) * population, 0) AS num_speakers
-FROM
-    spoken
-LEFT JOIN
-    country ON country.code = spoken.country;
-GROUP BY
-    spoken.language, country.population
-
--- DEBUG
-SELECT
-    country, language, percentage, population, ROUND((percentage / 100) * population, 0) AS num_speakers
-FROM
-    spoken
-LEFT JOIN
-    country ON country.code = spoken.country
-ORDER BY language;
-
-
---DEBUG
-SELECT
-    country, language, percentage, population, coalesce(ROUND((percentage / 100) * population, 0), 0) AS num_speakers
-FROM
-    spoken
-LEFT JOIN
-    country ON country.code = spoken.country
-ORDER BY language;
 
 
 -- 2.3) Which bordering countries have the greatest contrast in wealth? We define wealth as GDP.
@@ -520,21 +491,54 @@ SELECT
     borders.country2,
     e2.gdp AS GDP2,
     CASE
-        WHEN e1.gdp > e2.gdp THEN ROUND(e1.gdp / e2.gdp, 0)
-        WHEN e2.gdp > e1.gdp THEN ROUND(e2.gdp / e1.gdp, 0)
-        ELSE 1
+        WHEN e1.gdp / e2.gdp > 1 THEN ROUND(e1.gdp / e2.gdp, 0 )
+        ELSE ROUND(e1.gdp / e2.gdp, 2)
     END AS ratio
 FROM
     borders
 LEFT JOIN
-    country AS c1 ON c1.code = borders.country1
+    economy AS e1 ON e1.country = country1
 LEFT JOIN
-    country AS c2 ON c2.code = borders.country2
+    economy AS e2 ON e2.country = country2
+
+    UNION
+
+SELECT
+    borders.country2 AS country1,
+    e1.gdp AS GDP1,
+    borders.country1 AS country2,
+    e2.gdp AS GDP2,
+    CASE
+        WHEN e1.gdp / e2.gdp > 1 THEN ROUND(e1.gdp / e2.gdp, 0 )
+        ELSE ROUND(e1.gdp / e2.gdp, 2)
+    END AS ratio
+FROM
+    borders
 LEFT JOIN
-    economy AS e1 ON e1.country = c1.code
+    economy AS e2 ON e2.country = country1
 LEFT JOIN
-    economy AS e2 ON e2.country = c2.code
-ORDER BY ratio DESC;
+    economy AS e1 ON e1.country = country2
+
+ORDER BY ratio DESC NULLS LAST;
+
+
+----- Check one way working
+SELECT
+    borders.country1,
+    e1.gdp AS GDP1,
+    borders.country2,
+    e2.gdp AS GDP2,
+    CASE
+        WHEN e1.gdp > e2.gdp THEN ROUND(e1.gdp / e2.gdp, 0)
+        WHEN e2.gdp > e1.gdp THEN ROUND(e2.gdp / e1.gdp, 0)
+    END AS ratio
+FROM
+    borders
+LEFT JOIN
+    economy AS e1 ON e1.country = country1
+LEFT JOIN
+    economy AS e2 ON e2.country = country2
+ORDER BY ratio DESC NULLS LAST;
 
 
 ---------- P+ ----------
@@ -627,7 +631,7 @@ GROUP BY next_country
 ORDER BY num;
 
 
--- Working solution (I think)
+-- Working solution (I think) does not get ukraine
 WITH RECURSIVE reachable AS (
     SELECT
         CASE
@@ -650,6 +654,48 @@ WITH RECURSIVE reachable AS (
             WHEN r.next_country = b.country2 THEN b.country1
         END AS country,
         b.country1,
+        r.num_crossings + 1
+    FROM
+        borders b
+    INNER JOIN
+        reachable r ON
+            (r.next_country = b.country1 AND b.country2 != r.country) OR
+            (r.next_country = b.country2 AND b.country1 != r.country)
+    WHERE
+        r.num_crossings < 5
+)
+SELECT next_country as code, name, MIN(num_crossings) AS min_crossings
+FROM reachable
+LEFT JOIN country ON country.code = next_country
+GROUP BY next_country, name
+ORDER BY min_crossings;
+
+------ Working(2) kanske
+WITH RECURSIVE reachable AS (
+    SELECT
+        CASE
+            WHEN country1 = 'S' THEN country1
+            WHEN country2 = 'S' THEN country2
+        END AS country,
+        CASE
+            WHEN country1 = 'S' THEN country2
+            WHEN country2 = 'S' THEN country1
+        END AS next_country,
+        1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S' OR country2 = 'S'
+
+    UNION ALL
+
+    SELECT
+        CASE
+            WHEN r.next_country = b.country1 THEN b.country1
+            WHEN r.next_country = b.country2 THEN b.country2
+        END AS country,
+        CASE
+            WHEN r.next_country = b.country1 THEN b.country2
+            WHEN r.next_country = b.country2 THEN b.country1
+        END AS country2,
         r.num_crossings + 1
     FROM
         borders b
