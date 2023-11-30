@@ -970,16 +970,17 @@ ORDER BY
 
 
 
+-------- FINAL WORKING SOLUTION --------
 WITH RECURSIVE river_branches AS (
     SELECT
         name,
-        river AS main_river,
-        river AS branch,
-        river || ' -> ' || name::text AS path,
+        name AS main_river,
+        name AS branch,
+        name || ' -> ' ::text AS path,
         length,
-        2 AS num_rivers
+        1 AS num_rivers
     FROM river
-    WHERE river IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+    WHERE name IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
 
     UNION ALL
 
@@ -988,7 +989,7 @@ WITH RECURSIVE river_branches AS (
         rb.main_river,
         r.river,
         rb.path || ' -> ' || r.name,
-        r.length,
+        r.length + rb.length,
         rb.num_rivers + 1
     FROM
         river r
@@ -1005,15 +1006,16 @@ max_num_rivers AS (
         main_river
 )
 SELECT
+    RANK() OVER (ORDER BY mnr.max_num_rivers) AS rank,
     rb.path,
     rb.num_rivers,
-    RANK() OVER (ORDER BY mnr.max_num_rivers) AS rank
+    length
 FROM
     river_branches rb
 INNER JOIN
     max_num_rivers mnr ON rb.main_river = mnr.main_river AND rb.num_rivers = mnr.max_num_rivers
 ORDER BY
-    rank;
+    rank, length desc;
 
 
 
