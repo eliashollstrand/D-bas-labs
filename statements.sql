@@ -704,7 +704,7 @@ WITH RECURSIVE reachable AS (
             (r.next_country = b.country1 AND b.country2 != r.country) OR
             (r.next_country = b.country2 AND b.country1 != r.country)
     WHERE
-        r.num_crossings < 5
+        r.num_crossings < 5 AND b.country1 != 'S' AND b.country2 != 'S'
 )
 SELECT next_country as code, name, MIN(num_crossings) AS min_crossings
 FROM reachable
