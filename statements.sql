@@ -592,7 +592,7 @@ WITH RECURSIVE river_branches AS (
         name,
         name AS main_river,
         name AS branch,
-        name || ' -> ' ::text AS path,
+        name ::text AS path,
         length,
         1 AS num_rivers
     FROM river
@@ -682,3 +682,60 @@ GRANT ALL PRIVILEGES ON TABLE riveronisland TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE riverthrough TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE sea TO hollstra;
 GRANT ALL PRIVILEGES ON TABLE spoken TO hollstra;
+
+
+
+
+------- Homework 3 ----------
+
+CREATE TABLE Items (
+    itemID integer PRIMARY KEY,
+    name varchar(100) NOT NULL,
+    value integer NOT NULL,
+    CONSTRAINT positivePrice CHECK (price > 0)
+);
+
+CREATE TABLE People (
+    personID integer PRIMARY KEY,
+    name varchar(100) NOT NULL,
+);
+
+CREATE TABLE Ownership (
+    personID integer NOT NULL,
+    itemID integer NOT NULL,
+    CONSTRAINT PK_Ownership PRIMARY KEY (personID, itemID),
+    CONSTRAINT FK_OwnershipPersonID FOREIGN KEY (personID) REFERENCES People(personID),
+    CONSTRAINT FK_OwnershipItemID FOREIGN KEY (itemID) REFERENCES Items(itemID)
+);
+
+INSERT INTO Items (itemID, name, value) VALUES (1, 'item1', 10);
+INSERT INTO Items (itemID, name, value) VALUES (2, 'item2', 20);
+INSERT INTO Items (itemID, name, value) VALUES (3, 'item3', 30);
+INSERT INTO Items (itemID, name, value) VALUES (4, 'item4', 40);
+INSERT INTO Items (itemID, name, value) VALUES (5, 'item5', 50);
+INSERT INTO Items (itemID, name, value) VALUES (6, 'item6', 5);
+INSERT INTO Items (itemID, name, value) VALUES (7, 'item7', 15);
+INSERT INTO Items (itemID, name, value) VALUES (8, 'item8', 25);
+INSERT INTO Items (itemID, name, value) VALUES (9, 'item9', 35);
+INSERT INTO Items (itemID, name, value) VALUES (10, 'item10', 45);
+
+INSERT INTO People (personID, name) VALUES (1, 'person1');
+INSERT INTO People (personID, name) VALUES (2, 'person2');
+INSERT INTO People (personID, name) VALUES (3, 'person3');
+
+INSERT INTO Ownership (personID, itemID) VALUES (1, 1);
+INSERT INTO Ownership (personID, itemID) VALUES (1, 2);
+INSERT INTO Ownership (personID, itemID) VALUES (1, 3);
+
+INSERT INTO Ownership (personID, itemID) VALUES (2, 4);
+INSERT INTO Ownership (personID, itemID) VALUES (2, 5);
+INSERT INTO Ownership (personID, itemID) VALUES (2, 6);
+INSERT INTO Ownership (personID, itemID) VALUES (2, 7);
+
+INSERT INTO Ownership (personID, itemID) VALUES (3, 8);
+INSERT INTO Ownership (personID, itemID) VALUES (3, 9);
+INSERT INTO Ownership (personID, itemID) VALUES (3, 4);
+
+GRANT ALL PRIVILEGES ON TABLE items TO makv;
+GRANT ALL PRIVILEGES ON TABLE people TO makv;
+GRANT ALL PRIVILEGES ON TABLE ownership TO makv;
