@@ -458,7 +458,7 @@ CREATE TABLE TRANSACTIONS
 
 -- 2.1) 
 
-SELECT country.code, COUNT(*) AS num_neighbors
+SELECT country.name, COUNT(*) AS num_neighbors
 FROM country
 JOIN borders ON country.code = borders.country1 OR country.code = borders.country2
 GROUP BY country.code
@@ -467,10 +467,9 @@ ORDER BY num_neighbors;
 
 -- 2.2) Write a query for all the languages in the database, that states number of speakers and sorts them from most spoken to least spoken.
 
--- The total sum is not correct, i dont know why. Calculated it manually for mandarin, and i get the same as the query
 SELECT
     spoken.language,
-    COALESCE(ROUND(SUM((spoken.percentage / 100) * country.population), 0), 0) AS num_speakers
+    COALESCE(ROUND(SUM((spoken.percentage / 100) * country.population), 0), 0) AS num_speakers -- COALESCE to handle NULL values
 FROM
     country
 LEFT JOIN
@@ -573,14 +572,68 @@ WITH RECURSIVE reachable AS (
         borders b
     INNER JOIN
         reachable r ON
-            (r.next_country = b.country1 AND b.country2 != r.country) OR
-            (r.next_country = b.country2 AND b.country1 != r.country)
+            ((r.next_country = b.country1 AND b.country2 != r.country) OR
+            (r.next_country = b.country2 AND b.country1 != r.country))
+            AND country not in (SELECT next_country FROM reachable)
     WHERE
-        r.num_crossings < 5 AND b.country1 != 'S' AND b.country2 != 'S' -- Do not hard-code the country code
+        r.num_crossings < 5
 )
 SELECT next_country as code, name, MIN(num_crossings) AS min_crossings
 FROM reachable
 LEFT JOIN country ON country.code = next_country
+GROUP BY next_country, name
+ORDER BY min_crossings;
+
+
+------- Possible solution 2 -------
+WITH RECURSIVE initial_reachable AS (
+    SELECT
+        CASE
+            WHEN country1 = 'S' THEN country1
+            WHEN country2 = 'S' THEN country2
+        END AS country,
+        CASE
+            WHEN country1 = 'S' THEN country2
+            WHEN country2 = 'S' THEN country1
+        END AS next_country,
+        1 AS num_crossings
+    FROM borders
+    WHERE country1 = 'S' OR country2 = 'S'
+),
+
+filtered_reachable AS (
+    SELECT
+        ir.country,
+        ir.next_country,
+        ir.num_crossings
+    FROM initial_reachable ir
+
+    UNION ALL
+
+    SELECT
+        CASE
+            WHEN fr.next_country = b.country1 THEN b.country1
+            WHEN fr.next_country = b.country2 THEN b.country2
+        END AS country,
+        CASE
+            WHEN fr.next_country = b.country1 THEN b.country2
+            WHEN fr.next_country = b.country2 THEN b.country1
+        END AS next_country,
+        fr.num_crossings + 1
+    FROM
+        borders b
+    INNER JOIN
+        filtered_reachable fr ON
+            (fr.next_country = b.country1 AND b.country2 != fr.country) OR
+            (fr.next_country = b.country2 AND b.country1 != fr.country)
+    WHERE
+        fr.num_crossings < 5
+)
+
+SELECT next_country as code, name, MIN(num_crossings) AS min_crossings
+FROM filtered_reachable
+LEFT JOIN country ON country.code = filtered_reachable.next_country
+WHERE next_country NOT IN (SELECT country FROM initial_reachable)
 GROUP BY next_country, name
 ORDER BY min_crossings;
 
