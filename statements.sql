@@ -649,7 +649,7 @@ WITH RECURSIVE river_branches AS (
         length,
         1 AS num_rivers
     FROM river
-    WHERE name IN ('Nile', 'Amazon', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
+    WHERE name IN ('Nile', 'Amazonas', 'Yangtze', 'Rhein', 'Donau', 'Mississippi')
 
     UNION ALL
 
@@ -685,7 +685,6 @@ INNER JOIN
     max_num_rivers mnr ON rb.main_river = mnr.main_river AND rb.num_rivers = mnr.max_num_rivers
 ORDER BY
     rank, length desc;
-
 
 
 
