@@ -358,7 +358,7 @@ LEFT JOIN (SELECT *
 CREATE TABLE Books
 (bookID integer PRIMARY KEY,
 title varchar(100) NOT NULL,
-pages integer CONSTRAINT positivePages CHECK (pages > 0)
+pages integer NOT NULL CONSTRAINT positivePages CHECK (pages > 0)
 );
 
 CREATE TABLE Resources
@@ -409,7 +409,7 @@ name varchar(100) NOT NULL,
 address varchar(100) NOT NULL,
 email varchar(50) NOT NULL,
 CONSTRAINT validEmail CHECK (email LIKE '%@kth.se'),
-CONSTRAINT FK_UserUserID FOREIGN KEY (userID) REFERENCES Users(userID));
+);
 
 CREATE TABLE Students
 (userID integer,
@@ -432,7 +432,10 @@ physicalID integer NOT NULL,
 userID integer NOT NULL,
 DoB DATE DEFAULT CURRENT_DATE,
 DoR DATE CONSTRAINT DoRNotBeforeDoB CHECK (DoR >= DoB),
-DoE DATE DEFAULT CURRENT_DATE+7);
+DoE DATE DEFAULT CURRENT_DATE+7,
+CONSTRAINT FK_BorrowingPhysicalID FOREIGN KEY (physicalID) REFERENCES Resources(physicalID),
+CONSTRAINT FK_BorrowingUserID FOREIGN KEY (userID) REFERENCES Users(userID)
+);
 
 CREATE TYPE pMethod AS ENUM ('Klarna', 'Swish', 'Card','Cash');
 
