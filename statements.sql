@@ -233,19 +233,19 @@ DROP TABLE treating CASCADE;
 
 ------------------- Lab 2 -------------------
 
-GRANT ALL PRIVILEGES ON TABLE users TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE admins TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE students TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE books TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE transactions TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE fines TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE borrowing TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE edition TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE resources TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE prequels TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE author TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE language TO hollstra;
-GRANT ALL PRIVILEGES ON TABLE genre TO hollstra;
+GRANT ALL PRIVILEGES ON TABLE users TO makv;
+GRANT ALL PRIVILEGES ON TABLE admins TO makv;
+GRANT ALL PRIVILEGES ON TABLE students TO makv;
+GRANT ALL PRIVILEGES ON TABLE books TO makv;
+GRANT ALL PRIVILEGES ON TABLE transactions TO makv;
+GRANT ALL PRIVILEGES ON TABLE fines TO makv;
+GRANT ALL PRIVILEGES ON TABLE borrowing TO makv;
+GRANT ALL PRIVILEGES ON TABLE edition TO makv;
+GRANT ALL PRIVILEGES ON TABLE resources TO makv;
+GRANT ALL PRIVILEGES ON TABLE prequels TO makv;
+GRANT ALL PRIVILEGES ON TABLE author TO makv;
+GRANT ALL PRIVILEGES ON TABLE language TO makv;
+GRANT ALL PRIVILEGES ON TABLE genre TO makv;
 
 -- 1)
 SELECT title, string_agg(genre.genre, ',' )
@@ -408,7 +408,7 @@ CREATE TABLE Users
 name varchar(100) NOT NULL,
 address varchar(100) NOT NULL,
 email varchar(50) NOT NULL,
-CONSTRAINT validEmail CHECK (email LIKE '%@kth.se'),
+CONSTRAINT validEmail CHECK (email LIKE '%@kth.se')
 );
 
 CREATE TABLE Students
@@ -450,7 +450,8 @@ CREATE TABLE TRANSACTIONS
 (transactionID integer PRIMARY KEY,
  borrowingID integer NOT NULL,
  paymentMethod pMethod NOT NULL,
- DoP DATE NOT NULL
+ DoP DATE NOT NULL,
+ CONSTRAINT FK_TransactionBorrowingID FOREIGN KEY (borrowingID) REFERENCES Borrowing(borrowingID)
  );
  
 -- drop table admins,author,books,borrowing,edition,fines,genre,language,prequels,resources,students,transactions,users; 
@@ -465,7 +466,19 @@ SELECT country.name, COUNT(*) AS num_neighbors
 FROM country
 JOIN borders ON country.code = borders.country1 OR country.code = borders.country2
 GROUP BY country.code
-ORDER BY num_neighbors;
+ORDER BY num_neighbors
+
+
+------- solution 2 (Only minimum) -------
+WITH neighbors AS (
+    SELECT country.name, COUNT(*) AS num_neighbors
+    FROM country
+    JOIN borders ON country.code = borders.country1 OR country.code = borders.country2
+    GROUP BY country.code
+)
+SELECT *
+FROM neighbors
+WHERE num_neighbors = (SELECT MIN(num_neighbors) FROM neighbors);
 
 
 -- 2.2) Write a query for all the languages in the database, that states number of speakers and sorts them from most spoken to least spoken.
