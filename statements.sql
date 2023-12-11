@@ -807,3 +807,45 @@ INSERT INTO Ownership (personID, itemID) VALUES (3, 4);
 GRANT ALL PRIVILEGES ON TABLE items TO makv;
 GRANT ALL PRIVILEGES ON TABLE people TO makv;
 GRANT ALL PRIVILEGES ON TABLE ownership TO makv;
+
+
+
+
+
+------------- Lab 4 ---------------
+
+-- 1) Write a query that shows all titles and how many copies of each title that are available for borrowing.
+SELECT title, COUNT(*) AS num_copies
+FROM books
+LEFT JOIN resources ON books.bookid = resources.bookid
+NATURAL JOIN borrowing
+GROUP BY title
+ORDER BY title;
+
+-- 2) Write a query that shows all titles and how many copies of each title that are available for borrowing.
+WITH all_copies AS (
+    SELECT title, COUNT(*) AS num_copies
+    FROM books
+    LEFT JOIN resources ON books.bookid = resources.bookid
+    GROUP BY title
+), 
+borrowed_copies AS (
+    SELECT title, COUNT(*) AS num_copies_borrowed
+    FROM books
+    LEFT JOIN resources ON books.bookid = resources.bookid
+    LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid
+    WHERE borrowing.dor IS NULL
+    GROUP BY title
+)
+SELECT books.title, books.bookid, SUM(all_copies.num_copies - borrowed_copies.num_copies_borrowed) AS num_copies_available
+FROM books
+LEFT JOIN all_copies ON books.title = all_copies.title
+LEFT JOIN borrowed_copies ON books.title = borrowed_copies.title
+GROUP BY books.title, books.bookid
+ORDER BY title;
+
+
+SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = '{title}' AND resources.physicalid NOT IN (SELECT resources.physicalid FROM resources LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL);
+
+-- Check if a user has a fine that is not paid
+SELECT * FROM fines WHERE borrowingid IN (SELECT borrowingid FROM borrowing WHERE userid = {user_id}) AND borrowingid NOT IN (SELECT borrowingid FROM transactions);
