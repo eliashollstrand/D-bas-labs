@@ -151,10 +151,10 @@ def borrow_book():
     # query = f"SELECT * FROM books WHERE title = '{book_title}'"
     # cur.execute(query)
     query = f"SELECT * FROM books WHERE title = %s"
-    cur.execute(query, (book_title,))
+    cur.execute(query, (book_title, ))
     result = cur.fetchall()
     if len(result) == 0:
-        update_result_text("Book with the name: " + {book_title} + " does not exist")
+        update_result_text("Book with the name: " + book_title + " does not exist")
         return
     elif len(result) > 1 and len(isbn_entry.get()) < 1:
         update_result_text("Multiple books with the same title exist. Please specify the ISBN")
@@ -182,7 +182,7 @@ def borrow_book():
         # query = f"SELECT bookid FROM books WHERE title = '{book_title}'"
         # cur.execute(query)
         query = f"SELECT bookid FROM books WHERE title = %s"
-        cur.execute(query, (book_title))
+        cur.execute(query, (book_title, ))
         result = cur.fetchall()
         isbn = result[0][0]
     
@@ -201,10 +201,10 @@ def borrow_book():
     # query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.bookid = '{isbn}' AND resources.physicalid NOT IN (SELECT resources.physicalid FROM resources LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL);"    
     # cur.execute(query)
     query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.bookid = %s AND resources.physicalid NOT IN (SELECT resources.physicalid FROM resources LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL);"    
-    cur.execute(query, (isbn))
+    cur.execute(query, (isbn,))
     result = cur.fetchall()
     if len(result) == 0:
-        update_result_text("Book is not available")
+        update_result_text("Book " + book_title + " (" + isbn + ") is not available")
         return
     elif len(result) > 0:
         # Get a physical id that is available
