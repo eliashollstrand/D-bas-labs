@@ -29,8 +29,11 @@ def update_result_text(result):
 # Simple function to get all books with a specific genre.
 def get_book_title_by_genre():
     genre = genre_entry.get()
-    query = f"SELECT books.title FROM books LEFT JOIN genre ON books.bookid = genre.bookid WHERE genre.genre = '{genre}'"
-    cur.execute(query)
+    # Test injection 1: Horror'; INSERT INTO BOOKS (bookID,title,pages) VALUES (100000,'The Injection Book',666); --
+    # query = f"SELECT books.title FROM books LEFT JOIN genre ON books.bookid = genre.bookid WHERE genre.genre = '{genre}'"
+    # cur.execute(query)
+    query = f"SELECT books.title FROM books LEFT JOIN genre ON books.bookid = genre.bookid WHERE genre.genre = %s" # Parameterized query
+    cur.execute(query, (genre,)) # Passing values as parameters
     result = cur.fetchall()
     titles = [row[0] for row in result]
 
@@ -43,8 +46,10 @@ def get_book_title_by_genre():
 
 def get_physical_books_related_to_title():
     title = title_entry.get()
-    query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = '{title}'"
-    cur.execute(query)
+    # query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = '{title}'"
+    # cur.execute(query)
+    query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = %s"
+    cur.execute(query, (title,))
     result = cur.fetchall()
     copies = [row[0] for row in result]
 
@@ -70,14 +75,18 @@ def get_number_of_copies_available():
     update_result_text(result_str)
     
 def check_if_user_exists(email):
-    query = f"SELECT * FROM users WHERE email = '{email}'"
-    cur.execute(query)
+    # query = f"SELECT * FROM users WHERE email = '{email}'"
+    # cur.execute(query)
+    query = f"SELECT * FROM users WHERE email = %s"
+    cur.execute(query, (email,))
     result = cur.fetchall()
     return len(result) > 0
 
 def get_user_id(email):
-    query = f"SELECT userid FROM users WHERE email = '{email}'"
-    cur.execute(query)
+    # query = f"SELECT userid FROM users WHERE email = '{email}'"
+    # cur.execute(query)
+    query = f"SELECT userid FROM users WHERE email = %s"
+    cur.execute(query, (email,))
     result = cur.fetchall()
     return result[0][0]
 
@@ -95,16 +104,20 @@ def borrow_book():
     user_id = get_user_id(email)
 
     # Check that the user has not borrowed more than 5 books
-    query = f"SELECT * FROM borrowing WHERE userid = {user_id} AND dor IS NULL"
-    cur.execute(query)
+    # query = f"SELECT * FROM borrowing WHERE userid = {user_id} AND dor IS NULL"
+    # cur.execute(query)
+    query = f"SELECT * FROM borrowing WHERE userid = %s AND dor IS NULL"
+    cur.execute(query, (user_id,))
     result = cur.fetchall()
     if len(result) >= 5:
         update_result_text("User has reached the limit of 4 borrowed books at once.\nYou have borrowed " + str(len(result)) + " books.\nPlease return a book before borrowing a new one.")
         return
     
     # Check that the user does not have any fines that are not paid
-    query = f"SELECT * FROM fines WHERE borrowingid IN (SELECT borrowingid FROM borrowing WHERE userid = {user_id}) AND borrowingid NOT IN (SELECT borrowingid FROM transactions);"
-    cur.execute(query)
+    # query = f"SELECT * FROM fines WHERE borrowingid IN (SELECT borrowingid FROM borrowing WHERE userid = {user_id}) AND borrowingid NOT IN (SELECT borrowingid FROM transactions);"
+    # cur.execute(query)
+    query = f"SELECT * FROM fines WHERE borrowingid IN (SELECT borrowingid FROM borrowing WHERE userid = %s) AND borrowingid NOT IN (SELECT borrowingid FROM transactions);"
+    cur.execute(query, (user_id,))
     result = cur.fetchall()
     if len(result) > 0:
         update_result_text("You have unpaid fines. Please pay them before borrowing a new book.")
@@ -113,8 +126,10 @@ def borrow_book():
     book_title = book_entry.get()
     
     # Check that the book exists
-    query = f"SELECT * FROM books WHERE title = '{book_title}'"
-    cur.execute(query)
+    # query = f"SELECT * FROM books WHERE title = '{book_title}'"
+    # cur.execute(query)
+    query = f"SELECT * FROM books WHERE title = %s"
+    cur.execute(query, (book_title,))
     result = cur.fetchall()
     if len(result) == 0:
         update_result_text("Book with the name: " + {book_title} + " does not exist")
@@ -132,31 +147,39 @@ def borrow_book():
             return
         
         # Check that the book exists
-        query = f"SELECT * FROM books WHERE bookid = {isbn} AND title = '{book_title}'"    
-        cur.execute(query)
+        # query = f"SELECT * FROM books WHERE bookid = {isbn} AND title = '{book_title}'"    
+        # cur.execute(query)
+        query = f"SELECT * FROM books WHERE bookid = %s AND title = %s"    
+        cur.execute(query, (isbn, book_title))
         result = cur.fetchall()
         if len(result) == 0:
             update_result_text("Book with title: " + {book_title} + " and ISBN " + {isbn} + " does not exist")
             return
     else:
         # Get the isbn of the book
-        query = f"SELECT bookid FROM books WHERE title = '{book_title}'"
-        cur.execute(query)
+        # query = f"SELECT bookid FROM books WHERE title = '{book_title}'"
+        # cur.execute(query)
+        query = f"SELECT bookid FROM books WHERE title = %s"
+        cur.execute(query, (book_title))
         result = cur.fetchall()
         isbn = result[0][0]
     
     
     # Check that the user has not already borrowed the book with the same bookid too many times
-    query = f"SELECT * FROM borrowing LEFT JOIN resources ON borrowing.physicalid = resources.physicalid LEFT JOIN books ON resources.bookid = books.bookid WHERE books.bookid = {isbn} AND borrowing.userid= {user_id} AND borrowing.dor IS NULL"
-    cur.execute(query)
+    # query = f"SELECT * FROM borrowing LEFT JOIN resources ON borrowing.physicalid = resources.physicalid LEFT JOIN books ON resources.bookid = books.bookid WHERE books.bookid = {isbn} AND borrowing.userid= {user_id} AND borrowing.dor IS NULL"
+    # cur.execute(query)
+    query = f"SELECT * FROM borrowing LEFT JOIN resources ON borrowing.physicalid = resources.physicalid LEFT JOIN books ON resources.bookid = books.bookid WHERE books.bookid = %s AND borrowing.userid= %s AND borrowing.dor IS NULL"
+    cur.execute(query, (isbn, user_id))
     result = cur.fetchall()
     if len(result) >= 6:
         update_result_text("User has reached the limit of 6 borrows for this book")
         return
         
     # Check that the book is available
-    query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.bookid = '{isbn}' AND resources.physicalid NOT IN (SELECT resources.physicalid FROM resources LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL);"    
-    cur.execute(query)
+    # query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.bookid = '{isbn}' AND resources.physicalid NOT IN (SELECT resources.physicalid FROM resources LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL);"    
+    # cur.execute(query)
+    query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.bookid = %s AND resources.physicalid NOT IN (SELECT resources.physicalid FROM resources LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL);"    
+    cur.execute(query, (isbn))
     result = cur.fetchall()
     if len(result) == 0:
         update_result_text("Book is not available")
@@ -176,8 +199,10 @@ def borrow_book():
     # current_date_str = current_date.strftime("%Y-%m-%d")
     
     # Insert a new row into the borrowing table
-    query = f"INSERT INTO borrowing (borrowingid, userid, physicalid) VALUES ({borrowing_id}, {user_id}, {physical_id_to_borrow})"
-    cur.execute(query)
+    # query = f"INSERT INTO borrowing (borrowingid, userid, physicalid) VALUES ({borrowing_id}, {user_id}, {physical_id_to_borrow})"
+    # cur.execute(query)
+    query = f"INSERT INTO borrowing (borrowingid, userid, physicalid) VALUES (%s, %s, %s)"
+    cur.execute(query, (borrowing_id, user_id, physical_id_to_borrow))
     # Catch errors
     try:
         conn.commit()
@@ -187,8 +212,10 @@ def borrow_book():
         return
     
     # Get the due date for the book that we inserted
-    query = f"SELECT doe FROM borrowing WHERE borrowingid = {borrowing_id}"
-    cur.execute(query)
+    # query = f"SELECT doe FROM borrowing WHERE borrowingid = {borrowing_id}"
+    # cur.execute(query)
+    query = f"SELECT doe FROM borrowing WHERE borrowingid = %s"
+    cur.execute(query, (borrowing_id,))
     result = cur.fetchall()
     due_date = result[0][0]
     
