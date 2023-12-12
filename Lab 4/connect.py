@@ -1,6 +1,5 @@
 import psycopg2
 import tkinter as tk
-import datetime 
 
 
 """
@@ -28,15 +27,24 @@ def update_result_text(result):
 
 # Simple function to get all books with a specific genre.
 def get_book_title_by_genre():
-    genre = genre_entry.get()
-    # Test injection 1: Horror'; INSERT INTO BOOKS (bookID,title,pages) VALUES (100000,'The Injection Book',666); --
-    # query = f"SELECT books.title FROM books LEFT JOIN genre ON books.bookid = genre.bookid WHERE genre.genre = '{genre}'"
-    # cur.execute(query)
-    query = f"SELECT books.title FROM books LEFT JOIN genre ON books.bookid = genre.bookid WHERE genre.genre = %s" # Parameterized query
-    cur.execute(query, (genre,)) # Passing values as parameters
-    result = cur.fetchall()
-    titles = [row[0] for row in result]
+    genre = genre_entry.get().strip()
 
+    # Check if input is not empty or only whitespace
+    if not genre.strip():
+        update_result_text("Please enter a genre")
+        return
+
+    # Test injection 1: Horror'; INSERT INTO BOOKS (bookID,title,pages) VALUES (100000,'The Injection Book',666); --
+    query = "SELECT books.title FROM books LEFT JOIN genre ON books.bookid = genre.bookid WHERE genre.genre = %s"  # Parameterized query
+    cur.execute(query, (genre,))
+    result = cur.fetchall()
+
+    if len(result) < 1:
+        update_result_text("There are no books in the genre: " + genre)
+        return
+    
+    titles = [row[0] for row in result]
+    
     result_str = "The following books are in the genre: " + genre + "\n"
     for title in titles:
         result_str += f"{title}\n"
@@ -45,7 +53,12 @@ def get_book_title_by_genre():
 
 
 def get_physical_books_related_to_title():
-    title = title_entry.get()
+    title = title_entry.get().strip()
+    
+    if not title.strip():
+        update_result_text("Please enter a title")
+        return
+    
     # query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = '{title}'"
     # cur.execute(query)
     query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = %s"
@@ -92,7 +105,12 @@ def get_user_id(email):
 
 # Function to borrow a book
 def borrow_book():
-    email = email_entry.get()
+    email = email_entry.get().strip()
+    
+    if not email.strip():
+        update_result_text("Please enter a valid email")
+        return
+    
     # Check that email ends with @kth.se
     if not email.endswith("@kth.se"):
         update_result_text("Invalid email address")
@@ -123,7 +141,11 @@ def borrow_book():
         update_result_text("You have unpaid fines. Please pay them before borrowing a new book.")
         return
     
-    book_title = book_entry.get()
+    book_title = book_entry.get().strip()
+    
+    if not book_title.strip():
+        update_result_text("Please enter a title")
+        return
     
     # Check that the book exists
     # query = f"SELECT * FROM books WHERE title = '{book_title}'"
@@ -139,7 +161,7 @@ def borrow_book():
         return
     
     if len(isbn_entry.get()) > 0:
-        isbn = isbn_entry.get()
+        isbn = isbn_entry.get().strip()
         
         # Check that the isbn is valid
         if len(isbn) > 13 or not isbn.isdigit():
