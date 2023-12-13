@@ -849,3 +849,49 @@ SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid =
 
 -- Check if a user has a fine that is not paid
 SELECT * FROM fines WHERE borrowingid IN (SELECT borrowingid FROM borrowing WHERE userid = {user_id}) AND borrowingid NOT IN (SELECT borrowingid FROM transactions);
+
+
+
+
+---------- P+ ----------
+-- Elf Table
+CREATE TABLE Elf (
+    Name VARCHAR(255) PRIMARY KEY,
+    Favourite_Candy VARCHAR(255)
+);
+
+-- Gift Table
+CREATE TABLE Gift (
+    Elf_Name VARCHAR(255),
+    Wrappingpaper_type VARCHAR(255),
+    Wrappingpaper_Length INTEGER,
+    Content_Cost INTEGER,
+    PRIMARY KEY (Elf_Name, Wrappingpaper_type),
+    FOREIGN KEY (Elf_Name) REFERENCES Elf(Name),
+    FOREIGN KEY (Wrappingpaper_type) REFERENCES Wrappingpaper(Wrappingpaper_Type)
+);
+
+-- Wrappingpaper Table
+CREATE TABLE Wrappingpaper (
+    Wrappingpaper_Type VARCHAR(255) PRIMARY KEY,
+    Cost_Per_Meter INTEGER
+);
+
+
+--- Views
+
+CREATE VIEW ViewA AS
+SELECT Elf_Name, Wrappingpaper_Length * Cost_Per_Meter + Content_Cost AS cost_per_gift
+FROM Gift
+NATURAL JOIN Wrappingpaper;
+
+CREATE VIEW ViewB AS
+SELECT Elf_Name, SUM(cost_per_gift) AS total_cost
+FROM ViewA
+GROUP BY Elf_Name;
+
+CREATE VIEW ViewC AS
+SELECT Favourite_Candy, AVG(total_cost) AS average
+FROM ViewB
+JOIN Elf ON Elf_Name = name
+GROUP BY Favourite_Candy;

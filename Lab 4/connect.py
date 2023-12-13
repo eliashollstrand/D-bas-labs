@@ -64,8 +64,12 @@ def get_physical_books_related_to_title():
     query = f"SELECT resources.physicalid FROM resources LEFT JOIN books on resources.bookid = books.bookid WHERE books.title = %s"
     cur.execute(query, (title,))
     result = cur.fetchall()
+    if len(result) == 0:
+        update_result_text("There are no physical copies for " + title)
+        return
+    
     copies = [row[0] for row in result]
-
+    
     result_str = title + " has the following copies:\n"
     for id in copies:
         result_str += f"{id}\n"
@@ -76,7 +80,7 @@ def get_physical_books_related_to_title():
 
 # Function to get the number of copies available
 def get_number_of_copies_available():
-    query = f"WITH all_copies AS (SELECT title, COUNT(*) AS num_copies FROM books LEFT JOIN resources ON books.bookid = resources.bookid GROUP BY title), borrowed_copies AS (SELECT title, COUNT(*) AS num_copies_borrowed FROM books LEFT JOIN resources ON books.bookid = resources.bookid LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL GROUP BY title) SELECT books.title, books.bookid, SUM(all_copies.num_copies - borrowed_copies.num_copies_borrowed) AS num_copies_available FROM books LEFT JOIN all_copies ON books.title = all_copies.title LEFT JOIN borrowed_copies ON books.title = borrowed_copies.title GROUP BY books.title, books.bookid ORDER BY title;"
+    query = f"WITH all_copies AS (SELECT title, COUNT(*) AS num_copies FROM books LEFT JOIN resources ON books.bookid = resources.bookid WHERE physicalid IS NOT NULL GROUP BY title, books.bookid), borrowed_copies AS (SELECT title, COUNT(*) AS num_copies_borrowed FROM books LEFT JOIN resources ON books.bookid = resources.bookid LEFT JOIN borrowing ON resources.physicalid = borrowing.physicalid WHERE borrowing.dor IS NULL GROUP BY title, books.bookid) SELECT books.title, books.bookid, COALESCE(SUM(all_copies.num_copies - borrowed_copies.num_copies_borrowed), 0) AS num_copies_available FROM books LEFT JOIN all_copies ON books.title = all_copies.title LEFT JOIN borrowed_copies ON books.title = borrowed_copies.title GROUP BY books.title, books.bookid ORDER BY title;;"
     cur.execute(query)
     result = cur.fetchall()
     titles_and_id_nums = [(row[0], row[1], int(row[2]) if row[2] is not None else 0) for row in result]
