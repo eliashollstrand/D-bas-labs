@@ -131,7 +131,7 @@ def borrow_book():
     query = f"SELECT * FROM borrowing WHERE userid = %s AND dor IS NULL"
     cur.execute(query, (user_id,))
     result = cur.fetchall()
-    if len(result) >= 5:
+    if len(result) >= 4:
         update_result_text("User has reached the limit of 4 borrowed books at once.\nYou have borrowed " + str(len(result)) + " books.\nPlease return a book before borrowing a new one.")
         return
     
